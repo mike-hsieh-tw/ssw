@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "U79JitFdGhgSOj4NJfuwLaxHtdy4geik8ntLKu0vtYQDtZl8MpNJVbPnDFQxZo/oDp5G+6NVxtm/fa+26JTvIA==",
+  "success": true,
+  "projectFilePath": "D:\\TempFiles\\_CompanyProject\\排休輪班系統\\Code\\Master\\WorkScheduleSystem\\WorkScheduleSystem.IBaseDAL\\WorkScheduleSystem.IBaseDAL.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Neil\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\Neil\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

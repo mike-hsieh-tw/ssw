@@ -1,0 +1,12 @@
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\bin\Debug\netstandard2.0\WorkScheduleSystem.IDAL.deps.json
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\bin\Debug\netstandard2.0\WorkScheduleSystem.IDAL.dll
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\bin\Debug\netstandard2.0\WorkScheduleSystem.IDAL.pdb
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\bin\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.dll
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\bin\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.pdb
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\obj\Debug\netstandard2.0\WorkScheduleSystem.IDAL.csprojAssemblyReference.cache
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\obj\Debug\netstandard2.0\WorkScheduleSystem.IDAL.AssemblyInfoInputs.cache
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\obj\Debug\netstandard2.0\WorkScheduleSystem.IDAL.AssemblyInfo.cs
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\obj\Debug\netstandard2.0\WorkScheduleSystem.IDAL.csproj.CoreCompileInputs.cache
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\obj\Debug\netstandard2.0\WorkScheduleSystem.IDAL.csproj.CopyComplete
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\obj\Debug\netstandard2.0\WorkScheduleSystem.IDAL.dll
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.IDAL\obj\Debug\netstandard2.0\WorkScheduleSystem.IDAL.pdb

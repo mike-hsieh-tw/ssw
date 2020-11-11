@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "+O+96J/fXvHz+jXY1BkASAIyLHlf2Q/rsJqrL8XCGSnMMkK/CD2c+Nojxg7ruSupAHOIqjFq6q8CvrsRnA3teA==",
+  "success": true,
+  "projectFilePath": "D:\\TempFiles\\_CompanyProject\\排休輪班系統\\Code\\Master\\WorkScheduleSystem\\WorkScheduleSystem.Model\\WorkScheduleSystem.Model.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Neil\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\Neil\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

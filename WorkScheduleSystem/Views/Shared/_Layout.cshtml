@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>輪值班系統</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+
+    <link href="~/Content/css/dashboard.css" rel="stylesheet" />
+</head>
+<body>
+
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">輪值班系統</a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <input class="form-control form-control-dark w-100" type="text" placeholder="搜尋" aria-label="Search">
+        <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
+                <span id="navbarUserName" class="nav-item text-white"></span>
+            </li>
+        </ul>
+        <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
+                <a class="nav-link border-white" href="#" id="btn_signOut">登出</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div id="customMenu" class="sidebar-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(0)" v-bind:class="['nav-link', { active: active_li == 0}]">
+                                <span data-feather="home"></span>
+                                排班
+                                @*<span class="sr-only">(current)</span>*@
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(1)" v-bind:class="['nav-link', { active: active_li == 1}]">
+                                <span data-feather="file"></span>
+                                排休
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(2)" v-bind:class="['nav-link', { active: active_li == 2}]">
+                                <span data-feather="shopping-cart"></span>
+                                Products
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(3)" v-bind:class="['nav-link', { active: active_li == 3}]">
+                                <span data-feather="users"></span>
+                                Customers
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(4)" v-bind:class="['nav-link', { active: active_li == 4}]">
+                                <span data-feather="bar-chart-2"></span>
+                                Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(5)" v-bind:class="['nav-link', { active: active_li == 5}]">
+                                <span data-feather="layers"></span>
+                                Integrations
+                            </a>
+                        </li>
+                    </ul>
+
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Saved reports</span>
+                        <a class="d-flex align-items-center text-muted" href="#" aria-label="Add a new report">
+                            <span data-feather="plus-circle"></span>
+                        </a>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(6)" v-bind:class="['nav-link', { active: active_li == 6}]">
+                                <span data-feather="file-text"></span>
+                                Current month
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(7)" v-bind:class="['nav-link', { active: active_li == 7}]">
+                                <span data-feather="file-text"></span>
+                                Last quarter
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(8)" v-bind:class="['nav-link', { active: active_li == 8}]">
+                                <span data-feather="file-text"></span>
+                                Social engagement
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#" v-on:click="activate(9)" v-bind:class="['nav-link', { active: active_li == 9}]">
+                                <span data-feather="file-text"></span>
+                                Year-end sale
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!--main start-->
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">                
+                @RenderBody()
+            </main>
+            <!--main start-->
+        </div>
+    </div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <script src="~/Scripts/sweetalert2.10.js"></script>
+    <script src="~/Scripts/common/Utilities.js?version=202011080028"></script>
+    <script src="~/Scripts/vue2.6.12.js"></script>
+    <script src="~/Scripts/common/shiftInit.js?version=2020110800136"></script>
+    @RenderSection("scripts", required: false)
+
+
+</body>
+</html>
+
+
+

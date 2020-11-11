@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30621.155
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkScheduleSystem", "WorkScheduleSystem\WorkScheduleSystem.csproj", "{81606C74-CE3A-4CF3-9FB2-16B4DF093097}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkScheduleSystem.Common", "WorkScheduleSystem.Common\WorkScheduleSystem.Common.csproj", "{4EC59410-DDF7-4F7E-81AB-274D43535FC0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkScheduleSystem.Model", "WorkScheduleSystem.Model\WorkScheduleSystem.Model.csproj", "{6D443C0F-62BD-4C9C-AB72-06A3D1EFD1E0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkScheduleSystem.BaseModels", "WorkScheduleSystem.BaseModels\WorkScheduleSystem.BaseModels.csproj", "{85FEBB51-2698-4E28-A54E-07A6E9D7CF6C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkScheduleSystem.IDAL", "WorkScheduleSystem.IDAL\WorkScheduleSystem.IDAL.csproj", "{FD2DD656-B058-4DF7-872A-E99A51D010FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkScheduleSystem.DAL", "WorkScheduleSystem.DAL\WorkScheduleSystem.DAL.csproj", "{0BEFAD65-B0B7-4349-B082-E5BCE64F8281}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{81606C74-CE3A-4CF3-9FB2-16B4DF093097}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81606C74-CE3A-4CF3-9FB2-16B4DF093097}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81606C74-CE3A-4CF3-9FB2-16B4DF093097}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81606C74-CE3A-4CF3-9FB2-16B4DF093097}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4EC59410-DDF7-4F7E-81AB-274D43535FC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4EC59410-DDF7-4F7E-81AB-274D43535FC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4EC59410-DDF7-4F7E-81AB-274D43535FC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4EC59410-DDF7-4F7E-81AB-274D43535FC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6D443C0F-62BD-4C9C-AB72-06A3D1EFD1E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6D443C0F-62BD-4C9C-AB72-06A3D1EFD1E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6D443C0F-62BD-4C9C-AB72-06A3D1EFD1E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6D443C0F-62BD-4C9C-AB72-06A3D1EFD1E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85FEBB51-2698-4E28-A54E-07A6E9D7CF6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85FEBB51-2698-4E28-A54E-07A6E9D7CF6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85FEBB51-2698-4E28-A54E-07A6E9D7CF6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85FEBB51-2698-4E28-A54E-07A6E9D7CF6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD2DD656-B058-4DF7-872A-E99A51D010FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD2DD656-B058-4DF7-872A-E99A51D010FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD2DD656-B058-4DF7-872A-E99A51D010FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD2DD656-B058-4DF7-872A-E99A51D010FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BEFAD65-B0B7-4349-B082-E5BCE64F8281}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BEFAD65-B0B7-4349-B082-E5BCE64F8281}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BEFAD65-B0B7-4349-B082-E5BCE64F8281}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BEFAD65-B0B7-4349-B082-E5BCE64F8281}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EB79C97F-8281-4BBC-A04E-54FD1D140989}
+	EndGlobalSection
+EndGlobal

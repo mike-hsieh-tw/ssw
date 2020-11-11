@@ -1,0 +1,788 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+<style>
+    
+</style>
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">排班表</h1>    
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group mr-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+            <span data-feather="calendar"></span>
+            This week
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-2 mb-3">
+        <label for="select_department">部門：</label>
+        <select class="custom-select d-block w-100" id="select_department" required="">
+            <!-- dynamic append by SetDepartmentSelectList()-->
+        </select>
+        <div class="invalid-feedback">
+            Please select a valid country.
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label for="select_shiftSystem">班表：</label>
+        <select class="custom-select d-block w-100" id="select_shiftSystem" required="">
+            <option>無</option>
+            <!-- dynamic append by SetShiftSystemSelectList()-->
+        </select>
+        <div class="invalid-feedback">
+            Please provide a valid state.
+        </div>
+    </div>
+    <div class="col-md-6 mb-0">
+        <!-- empty -->
+    </div>
+    <div class="col-md-1 mb-3">
+        <label for="btn_saveShiftForm"></label>
+        <input class="form-control btn btn-primary" type="button" name="saveForm" id="btn_saveShiftForm" value="儲存班表" />
+    </div>
+</div>
+
+<div id="ErrMsgDiv">
+    <!-- Error Massage -->
+</div>
+
+<div class="table-responsive mt-1">
+    <table class="table table-striped table-sm table-bordered text-center">
+        <thead id="ShiftThead">
+           <!--dynamic create date head -->
+        </thead>
+        <tbody id="ShiftTbody">
+            <!-- dynamic append by CreateTbodyWeekDay() 產生星期-->
+            <!-- dynamic append by CreateTbodyMultiUser()  產生班表排班內容-->
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <!-- TotalMessage -->
+    <p class="mb-0" id="totalShiftHours_p">當次須排總時數：<span id="totalShiftHours"></span></p>
+    <p class="mb-0" id="totalSetShiftHours_p">已排時數：<span id="totalSetShiftHours"></span></p>
+    <p class="mb-0" id="totalSetSpcHours_p">已排特休：<span id="totalSetSpcHours"></span></p>
+    <p class="mb-0" id="leftShiftHours_p">總尚需排時數時數：<span id="leftShiftHours"></span></p>
+    <p class="mb-0" id="totalNormalFixHours_p">之前缺少/超額普通時數：<span id="totalNormalFixHours"></span></p>
+    <p class="mb-0" id="totalNationalFixHours_p">之前缺少/超額國定假日時數：<span id="totalNationalFixHours"></span></p>
+</div>
+
+@section scripts{
+
+    <script src="~/Scripts/dayjs.min.js"></script>
+    <script src="~/Scripts/sweetalert2.10.js"></script>
+    <script type="text/javascript">
+
+        Array.prototype.groupBy = function (prop) {
+            return this.reduce(function (groups, item) {
+                const val = item[prop]
+                groups[val] = groups[val] || []
+                groups[val].push(item)
+                return groups
+            }, {})
+        };
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top',
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        })
+
+        // 全域
+        var formData;
+        var AuthUserData;
+
+        $(() => {
+
+            AuthUserData = GetUserInfo(); // 先取得UserInfo，放全域中
+            console.log(AuthUserData); // 打印用戶資料
+
+            GetShiftInitInfo(); // 初始取得默認資料 + 對應權限獲取資料
+
+            SaveShiftForm_ShiftEmp(); // 儲存排班資料
+
+        });
+
+        // 初始取得默認資料 + 設置部門Select
+        var GetShiftInitInfo = () => {
+            if (ValidateMethod()) { // 驗證cookie和token
+                 $.ajax({
+                    url: '@Url.Action("GetForm", "ShiftService")',
+                    type: 'GET',
+                    success: (value) => {
+                        formData = value; // 設置共用資料
+                        console.log('formData:',formData);
+
+                        switch (AuthUserData.userTypeId) {
+                            case 4: // 排班人員
+                                console.log('排班人員 啟用!');
+                                SetDepartmentSelectList_ShiftEmp(); // 設置[排班人員]的部門Select
+                                break;
+
+                            default:
+                                break;
+                        }
+
+                    },
+                    error: (rtnVal) => {
+
+                    }
+               });
+            }
+        };
+
+        //#region 排班人員
+         // 設置部門Select + 設置change事件取得對應班表
+        let SetDepartmentSelectList_ShiftEmp = () => {
+            let DocFrag = $(document.createDocumentFragment());
+            DocFrag.append($(`<option value="0">請選擇</option>`));
+            formData.DepartmentModelList.forEach((item, index, array) => {
+                let opt = $(`<option value=${item.Id}>${item.name}</option>`);
+                DocFrag.append(opt);
+            });
+            $("#select_department").html(DocFrag).on('change', function () {
+                //console.log(this.value);
+                if (this.value != 0) { // 點"請選擇"不動作
+                    GetShiftSystemByDepartment_ShiftEmp(this.value);
+                } else {
+                    $('#ShiftThead').html(''); // 清空
+                    $('#ShiftTbody').html(''); // 清空
+                    $('#select_shiftSystem').html('<option value="0">無</option>');
+                }
+            });
+        };
+
+        // 取得對應部門ID的班表
+        let GetShiftSystemByDepartment_ShiftEmp = (departmentId) => {
+            if (ValidateMethod()) { // 驗證cookie和token
+                 $.ajax({
+                     url: `@Url.Action("GetShiftSystemByDepartmentId", "ShiftService")/${departmentId}`,
+                    type: 'GET',
+                    success: (result) => {
+                        //console.log('shiftSystem', result);
+                        SetShiftSystemSelectList_ShiftEmp(result);
+                    },
+                    error: (errMsg) => {
+                        // ToDo...
+                    }
+               });
+            }
+        };
+
+        // 設置對應部門ID的班表列表 + change 事件 產生對應的班表
+        let SetShiftSystemSelectList_ShiftEmp = (result) => {
+            let DocFrag = $(document.createDocumentFragment());
+            DocFrag.append($(`<option value="0">請選擇</option>`));
+            result.forEach((item, index, array) => {
+                let opt = $(`<option value=${item.Id}>${item.name}</option>`);
+                DocFrag.append(opt);
+            });
+            $("#select_shiftSystem").html(DocFrag).on('change', function () {
+                if (this.value != 0) {
+                    GetShiftSystemByShiftSystemID_ShiftEmp(this.value);
+                } else {
+                    $('#ShiftThead').html(''); // 清空
+                    $('#ShiftTbody').html(''); // 清空
+                }
+            });
+        };
+
+
+        // 取得班表內容 by ShiftSystemID(班表ID) + change 事件產生班表
+        let GetShiftSystemByShiftSystemID_ShiftEmp = (sId) => {
+            if (ValidateMethod()) { // 驗證cookie和token
+                $.ajax({
+                    url: `@Url.Action("GetShiftAllDataViewModel", "ShiftService")?sId=${sId}`,
+                    type: 'GET',
+                    async: false,
+                    success: (result) => {
+
+                        let strDate = result.strDate;
+                        let endDate = result.endDate;
+                        let hasNationalHoliday = result.hasNationalHoliday;
+                        let data = result.ShiftUnitDataViewModelList;
+
+                        CreateTheadDate_ShiftEmp(strDate, endDate); // 產生日期表頭
+
+                        CreateTbodyWeekDay_ShiftEmp(strDate, endDate); // 產生星期
+
+                        //  產生班表排班內容。參數=> 1.起始日期  2.終止日期  3.排班資料  4.使用者ID(選填，不填則是該班表所有人員)
+                        CreateTbodyMultiUser_ShiftEmp(strDate, endDate, data, AuthUserData.Id);
+
+                        LoadShiftTotalInfo_ShiftEmp(result); // 載入排班統計資料
+                    },
+                    error: (errMsg) => {
+                        // ToDo...
+                    }
+               });
+            }
+        };
+
+        // 取得所有班表日期陣列
+        var GetDateArray_ShiftEmp = (strDate, endDate, IsOrigin = false) => {
+            var currentDate = dayjs(strDate);
+            var finalDate = dayjs(endDate);
+
+            var dateArray = [];
+            var dataArrayOrigin = [];
+
+            while (dayjs(currentDate) <= dayjs(finalDate)) {
+                dateArray.push(`${currentDate.month() +1}/${currentDate.date()}`);
+                dataArrayOrigin.push(currentDate);
+                currentDate = dayjs(currentDate).add(1, 'day');
+            }
+            return IsOrigin === true ? dataArrayOrigin :  dateArray;
+        };
+
+        // 取得所有班表星期陣列
+        var GetWeekDayArray_ShiftEmp = (strDate, endDate) => {
+            var day_list = ['日', '一', '二', '三', '四', '五', '六'];
+            var currentDate = dayjs(strDate);
+            var finalDate = dayjs(endDate);
+            var weekDayArray = [];
+            while (currentDate <= finalDate) {
+                weekDayArray.push(day_list[currentDate.day()]);
+                currentDate = dayjs(currentDate).add(1, 'day');
+            };
+            return weekDayArray;
+        };
+
+        // 創建表頭日期
+        var CreateTheadDate_ShiftEmp = (strDate, endDate) => {
+            var Dates = GetDateArray_ShiftEmp(strDate, endDate);
+            var DocFrag = $(document.createDocumentFragment());
+            var tr = $('<tr name="date"></tr>');
+            DocFrag.append($('<th>#</th>'));
+            $.each(Dates, (index, item) => {
+                var th = $('<th></th>').text(item);
+                DocFrag.append(th);
+            });
+            tr.append(DocFrag);
+            $("#ShiftThead").html(tr);
+        };
+
+        // 檢查是否是周末假日
+        var CheckIsWeekend_ShiftEmp = (currentDate) => {
+            if (dayjs(currentDate).day() == 0 || dayjs(currentDate).day() == 6 || currentDate == "六" || currentDate == "日") {
+                return true;
+            }
+        };
+
+        // 創建表身星期
+        var CreateTbodyWeekDay_ShiftEmp = (strDate, endDate) => {
+            var Days = GetWeekDayArray_ShiftEmp(strDate, endDate);
+            var DocFrag = $(document.createDocumentFragment());
+            var tr = $('<tr name="day" ></tr>');
+            DocFrag.append($('<th>姓名</th>'));
+            $.each(Days, (index, item) => {
+                var td = $('<td></td>').text(item);
+                if (CheckIsWeekend_ShiftEmp(item)) {
+                    td.css('background-color', 'MistyRose');
+                }
+                DocFrag.append(td);
+            });
+
+            tr.append(DocFrag);
+            $("#ShiftTbody").html(tr);
+        };
+
+
+        // 創建表身單一員工班表
+        var CreateTbodyUser_ShiftEmp = (strdate, endDate, data, uid = 0) => {
+            var Dates = GetDateArray_ShiftEmp(strdate, endDate, true);
+            var DocFrag = $(document.createDocumentFragment());
+            var dataList = data;
+            if (uid != 0) {
+                dataList = data.filter(u => u.uId == uid);
+            }
+            if (dataList.length !== 0) {
+                var sId = dataList[0].sId;
+                var tr = $('<tr name="day" ></tr>');
+                DocFrag.append($(`<td>${dataList[0].uName}</td>`));
+                $.each(Dates, (dNo, date) => {
+                    var matchData = dataList.filter(x => dayjs(x.sDate).isSame(date));
+                    var match = matchData[0];
+                    var formatDate = dayjs(date).format('YYYYMMDD');
+                    if (matchData.length > 0) {
+                        var td = $('<td></td>').addClass('p-0');
+                        var input = $('<input>')
+                            .addClass(`p-0 form-control  btn btn-outline-warning text-dark`)
+                            .attr({
+                                'type': 'button',
+                                'data-sId': match.sId,
+                                'data-uId': match.uId,
+                                'data-sDate': formatDate,
+                                'data-stId': match.stId,
+                                'data-sMemo': match.sMemo,
+                                'data-sHours': match.sHours,
+                                'disabled': dayjs() > dayjs(strdate).subtract(5, 'day')
+                            })
+                            .val(`${formData.ShiftTypeModelList.filter(x => x.Id == match.stId)[0].displayName}(${match.sHours})`)
+                            .click(() => {
+                                FillInfo_ShiftEmp(match.uId, formatDate);
+                            });
+                        td.append(input);
+                        if (CheckIsWeekend_ShiftEmp(date)) {
+                            td.css('background', 'MistyRose');
+                            input.attr({
+                                'data-isWeekend': 'Y',
+                            });
+                        }
+                        DocFrag.append(td);
+                    } else {
+                        var td = $('<td></td>').addClass('p-0');
+                        var input = $('<input>')
+                            .addClass(`p-0 form-control  btn btn-outline-warning text-dark`)
+                            .attr({
+                                'type': 'button',
+                                'data-sId': sId,
+                                'data-uId': uid,
+                                'data-sDate': formatDate,
+                                'data-stId': '',
+                                'data-sMemo': '',
+                                'data-sHours': '',
+                                'disabled': dayjs() > dayjs(strdate).subtract(5, 'day')
+                            })
+                            .click(() => {
+                                FillInfo_ShiftEmp(uid, formatDate);
+                            });
+                        td.append(input);
+                        if (CheckIsWeekend_ShiftEmp(date)) {
+                            td.css('background-color', 'MistyRose');
+                            input.attr({
+                                    'data-isWeekend': 'Y',
+                                });
+                        }
+                        DocFrag.append(td);
+                    }
+                });
+                tr.append(DocFrag);
+                return tr;
+            } else if (dataList.length === 0) {
+                var sId = $('#select_shiftSystem').val();;
+                var tr = $('<tr name="day" ></tr>');
+                DocFrag.append($(`<td>${AuthUserData.name}</td>`));
+                $.each(Dates, (dNo, date) => {
+                    var formatDate = dayjs(date).format('YYYYMMDD');
+                    var td = $('<td></td>').addClass('p-0');
+                    var input = $('<input>')
+                        .addClass(`p-0 form-control  btn btn-outline-warning text-dark`)
+                        .attr({
+                            'type': 'button',
+                            'data-sId': sId,
+                            'data-uId': uid,
+                            'data-sDate': formatDate,
+                            'data-stId': '',
+                            'data-sMemo': '',
+                            'data-sHours': '',
+                            'disabled': dayjs() > dayjs(strdate).subtract(5, 'day')
+                        })
+                        .click(() => {
+                            FillInfo_ShiftEmp(uid, formatDate);
+                        });
+                    td.append(input);
+                    if (CheckIsWeekend_ShiftEmp(date)) {
+                        td.css('background-color', 'MistyRose');
+                        input.attr({
+                                'data-isWeekend': 'Y',
+                            });
+                    }
+                    DocFrag.append(td);
+                });
+                tr.append(DocFrag);
+                return tr;
+            }
+
+        };
+
+        // 創建表身多筆員工班表
+        let CreateTbodyMultiUser_ShiftEmp = (strdate, endDate, data, uId = 0) => {
+            var DocFrag = $(document.createDocumentFragment());
+            const groupByUid = data.groupBy('uId');
+            const dataListKeys = Object.keys(groupByUid);
+            if (uId != 0) {
+                DocFrag.append(CreateTbodyUser_ShiftEmp(strdate, endDate, data, uId)); // 單一員工
+                $("#ShiftTbody").append(DocFrag);
+            }
+            else {
+                dataListKeys.forEach((item, index, array) => {
+                    console.log(item, index, array);
+                    DocFrag.append(CreateTbodyUser_ShiftEmp(strdate, endDate, data, item)); // 多員工檢視
+                    $("#ShiftTbody").append(DocFrag);
+                });
+            }
+            GetTotalShiftInfo_ShiftEmp(); // 計算總排班資訊
+        };
+
+        //    <p class="mb-0" id="totalShiftHours_p">當次須排總時數：<span id="totalShiftHours"></span></p>
+        //    <p class="mb-0" id="totalSetShiftHours_p">已排時數：<span id="totalSetShiftHours"></span></p>
+        //    <p class="mb-0" id="totalSetSpcHours_p">已排特休：<span id="totalSetSpcHours"></span></p>
+        //    <p class="mb-0" id="leftShiftHours_p">總尚需排時數時數：<span id="leftShiftHours"></span></p>
+        //    <p class="mb-0" id="totalNormalFixHours_p">之前缺少/超額普通時數：<span id="totalNormalFixHours"></span></p>
+        //    <p class="mb-0" id="totalNationalFixHours_p">之前缺少/超額國定假日時數：<span id="totalNationalFixHours"></span></p>
+
+        // 載入排班統計資料
+        let LoadShiftTotalInfo_ShiftEmp = (result) => {
+
+            // 確認當次須排總時數是否有國定假日並設定日期=> [無:160Hr]，[有:160+8，且這多個8小時要再之後兩個班表內放掉調]
+            if (result.hasNationalHoliday == true) $('#totalShiftHours').text('168');
+            else $('#totalShiftHours').text('160');
+
+            // 總尚需排時數時數
+
+
+
+        };
+
+        // 填寫排班資料
+        let FillInfo_ShiftEmp = (uid, date) => {
+            let stId = $(`input[data-uId='${uid}'][data-sDate='${date}']`).attr('data-stId');
+            let sMemo = $(`input[data-uId='${uid}'][data-sDate='${date}']`).attr('data-sMemo');
+            let sHours = $(`input[data-uId='${uid}'][data-sDate='${date}']`).attr('data-sHours');
+            Swal.fire({
+                html:
+                    `
+                    <h2>班表</h2>
+                    <form>
+                      <div class="form-group">
+                        <div style="text-align:left"><label for="shiftType">班別</label></div>
+                        <select class="form-control"  name="shiftType" id="shiftType" >
+
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <div style="text-align:left"><label for="shiftHours">時數</label></div>
+                        <input type="number" id="shiftHours" class="form-control"/>
+                      </div>
+                      <div class="form-group">
+                        <div style="text-align:left"><label for="shiftMemo">備註</label></div>
+                        <textarea class="form-control" id="shiftMemo" rows="3"></textarea>
+                      </div>
+                    </form>
+                    `,
+                focusConfirm: false,
+                confirmButtonText: '確認',
+                preConfirm: () => {
+                    let shiftTypeVal = $('#shiftType');
+                    let shiftMemoVal = $('#shiftMemo');
+                    let shiftHours = $('#shiftHours');
+                    if (shiftTypeVal.val() != 0) {
+                        console.log();
+                        $(`input[data-uId='${uid}'][data-sDate='${date}']`)
+                            .attr({
+                                'data-stId': shiftTypeVal.val(),
+                                'data-sMemo': shiftMemoVal.val(),
+                                'data-sHours': shiftHours.val()
+                            })
+                            .val(
+                                `${formData.ShiftTypeModelList.filter(x => x.Id == shiftTypeVal.val())[0].displayName}(${shiftHours.val()})`);
+                    }
+                    GetTotalShiftInfo_ShiftEmp(); // 計算排班資訊
+                }
+            })
+            LoadShiftTypeSelect_ShiftEmp(stId); // 載入選定班別類別
+            LoadShiftHours_ShiftEmp(stId, sHours); // 載入排班時數
+            LoadShiftMemoTextArea_ShiftEmp(sMemo); // 載入輸入的備註
+        };
+
+        // 計算排班資訊
+        let GetTotalShiftInfo_ShiftEmp = () => {
+            let totalSetShiftHours = 0;
+            var shiftFormData = $('#ShiftTbody input').toArray();
+            shiftFormData.forEach((item, index, array) => {
+                let stId = $(item).attr('data-stId'); // stId == 4 是 休假
+                if (stId > 0) {
+                    totalSetShiftHours += parseFloat($(item).attr('data-sHours'));
+                };
+            });
+
+            // 載入總時數
+            $('#totalSetShiftHours').text(`${totalSetShiftHours}`);
+
+        };
+
+        // 載入選定班別類別
+        let LoadShiftTypeSelect_ShiftEmp = (stId) => {
+            let DocFrag = $(document.createDocumentFragment());
+            DocFrag.append($(`<option value="0">請選擇</option>`));
+            formData.ShiftTypeModelList.forEach((item, index, array) => {
+                if (item.Id == stId) {
+                    let opt = $(`<option value=${item.Id} data-hours="${item.actualHours}" selected>${item.name}</option>`);
+                    DocFrag.append(opt);
+                }
+                else {
+                    let opt = $(`<option value=${item.Id} data-hours="${item.actualHours}">${item.name}</option>`);
+                    DocFrag.append(opt);
+                }
+            });
+            $('#shiftType')
+                .append(DocFrag)
+                .on('change', function () { // change 事件時，將時數放入input中
+                    let hours = $('#shiftType option:selected').attr('data-hours');
+                    // 日班:1  晚班:2  全班:3  休假:4  特休:5  其他:6  補回時數:7 ... From DB[ShiftType]
+                    if (this.value == 1 || this.value == 2 || this.value == 3 || this.value == 4) {
+                        $('#shiftHours').val(hours).attr('disabled', true);
+                    } else {
+                        $('#shiftHours').val(hours).attr('disabled', false);
+                    }
+                });
+        };
+
+        let LoadShiftHours_ShiftEmp = (stId, sHours) => {
+            // 日班:1  晚班:2  全班:3  休假:4  特休:5  其他:6  補回時數:7 ... From DB[ShiftType]
+            if (stId == 1 || stId == 2 || stId == 3 || stId == 4) {
+                $('#shiftHours').val(sHours).attr('disabled', true);
+            } else {
+                $('#shiftHours').val(sHours).attr('disabled', false);
+            }
+        };
+
+
+        // 載入輸入的備註
+        let LoadShiftMemoTextArea_ShiftEmp = (sMemo) => {
+            $('#shiftMemo').val(sMemo);
+        };
+
+        // 取得班表內容
+        let GetShiftFormData_ShiftEmp = () => {
+            let dataArray = new Array();
+            var shiftFormData = $('#ShiftTbody input:not([data-stId=""])').toArray();
+            console.log(shiftFormData);
+            shiftFormData.forEach((item, index, array) => {
+                dataArray.push({
+                    sId: $(item).attr('data-sId'),
+                    uId: $(item).attr('data-uId'),
+                    stId: $(item).attr('data-stId'),
+                    sDate: $(item).attr('data-sDate'),
+                    sMemo: $(item).attr('data-sMemo'),
+                    sHours: $(item).attr('data-sHours'),
+                    updateEmp: AuthUserData.name, // [0:登入者Pk(id), 1:工號(no), 2:名稱(name), 3:是否鎖定(status), 4:權限(userTypeId), 5.部門Id(depID)]
+                });
+            });
+            return dataArray;
+        };
+       
+
+        // 取得班表總時數內容
+        let GetShiftHoursFormData_ShiftEmp = () => {
+            let dataArray = new Array();
+            dataArray.push({
+                uId: AuthUserData.Id,
+                sId: parseInt($('#select_shiftSystem').val()) ,
+                totalShiftHours: parseFloat($('#totalShiftHours').text()) ,
+                totalSetShiftHours: parseFloat( $('#totalSetShiftHours').text()),
+                totalSetSpcHours: parseFloat($('#totalSetSpcHours').text()),
+                totalNormalFixHours: parseFloat($('#totalNormalFixHours').text()),
+                totalNationalFixHours: parseFloat( $('#totalNationalFixHours').text()),
+                updateEmp: AuthUserData.name
+            });
+            return dataArray;
+        };
+
+        // 儲存班表總資訊
+        let SaveShiftForm_ShiftEmp = () => {
+            $('#btn_saveShiftForm').click(() => {
+                if (ValidateMethod()) { // 驗證cookie和token
+                    $('#ErrMsgDiv').empty(); // 預設清空錯誤訊息
+                    let DocFrag = $(document.createDocumentFragment()); // 錯誤訊息集合
+                    let IsValid = true;　// 預設通過
+
+                    // <驗證條件>
+
+                    // 驗證條件1.每兩周至少排兩天假
+                    if (AtLeastTwoDayOffInTwoWeek_ShiftEmp() == false) {
+                        let p = $('<p></p>').text(`錯誤: 每兩周至少排２天休假！`).addClass('font-weight-bold text-danger mb-0 ');
+                        DocFrag.append(p);
+                        IsValid = false;
+                    }
+
+                    // 驗證條件2.每四周至少排八天假
+                    if (AtLeastEightDayOffInFourWeek_ShiftEmp() == false) {
+                        let p = $('<p></p>').text(`錯誤: 每４周至少排８天休假！`).addClass('font-weight-bold text-danger mb-0 ');
+                        DocFrag.append(p);
+                        IsValid = false;
+                    }
+
+                    // 驗證條件3.當次班表最多可休2天假日
+                    if (NoMoreThenTwoDayOffInWeekendType_ShiftEmp() == false) {
+                        let p = $('<p></p>').text(`錯誤: 當次班表最多排２天假日休假！`).addClass('font-weight-bold text-danger mb-0 ');
+                        DocFrag.append(p);
+                        IsValid = false;
+                    }
+
+                    if (Shift160HoursOneSchedule_ShiftEmp() == false) {
+                        let p = $('<p></p>').text(`錯誤: 當次班表需上滿時數160小時！`).addClass('font-weight-bold text-danger mb-0 ');
+                        DocFrag.append(p);
+                        IsValid = false;
+                    }
+
+
+
+
+
+                    if (IsValid == false) {
+                        $('#ErrMsgDiv').append(DocFrag);
+                    }
+
+                    // 儲存每日排班資訊 + 儲存班表總時數資訊
+                    SaveShift_ShiftEmp();
+                }
+            });
+        };
+
+        // 儲存每日排班資訊
+        let SaveShift_ShiftEmp = () => {
+             $.ajax({
+                url: '@Url.Action("SaveShiftFormData", "ShiftService")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    shiftFormData: GetShiftFormData_ShiftEmp(),
+                }),
+                success: (result) => {
+                    if (result.Message == 'success') {
+                        Toast.fire({
+                            icon: 'success',
+                            title: '作業完成'
+                        });                        
+                    } else {
+                        let errDate = result.DataList.ShiftScheduleResult.map(x => `${x.substring(0, 4)}/${x.substring(4, 6)}/${x.substring(6, 8)}`);
+                        alert(`作業失敗，日期:[${errDate.join(',')}]寫入失敗!`);
+                    }
+                    GetShiftSystemByShiftSystemID_ShiftEmp($('#select_shiftSystem').val()); // 刷新資料
+                    SaveShiftHours_ShiftEmp(); // 儲存班表總時數資料
+                },
+                error: function (jqXHR, exception) {
+                    alert('作業失敗，請聯絡管理人員!');
+                }
+            });
+        };
+
+        // 儲存班表總時數資料
+        let SaveShiftHours_ShiftEmp = () => {
+            $.ajax({
+                url: '@Url.Action("SaveShiftHoursFormData", "ShiftService")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    shiftFormHoursData: GetShiftHoursFormData_ShiftEmp(),
+                }),
+                success: (result) => {
+                    if (result.Message == 'success') {
+                        GetShiftSystemByShiftSystemID_ShiftEmp($('#select_shiftSystem').val()); // 刷新資料
+                    } else {
+                        let errDate = result.DataList.ShiftScheduleHoursResult.map(x => `${x.substring(0, 4)}/${x.substring(4, 6)}/${x.substring(6, 8)}`);
+                        alert(`作業失敗，使用者編號:[${errDate.join(',')}]寫入失敗!`);
+                    }
+                },
+                error: function (jqXHR, exception) {
+                    alert('作業失敗，請聯絡管理人員!');
+                }
+            });
+        };
+
+
+        // 驗證條件1.每兩周至少排兩天假
+        let AtLeastTwoDayOffInTwoWeek_ShiftEmp = () => {
+            let FirstWeekDayOffCount = 0;
+            let SecondWeekDayOffCount = 0;
+            var shiftFormData = $('#ShiftTbody input').toArray();
+            shiftFormData.forEach((item, index, array) => {
+                let stId = $(item).attr('data-stId'); // stId == 4 是 休假
+                //let isWeekend = $(item).attr('data-isWeekend'); // isWeekend == 'Y' 是周末
+                if (index >= 0 && index <= 13 && stId == 4 ) {　// 前兩周
+                    FirstWeekDayOffCount++;
+                }
+                else if (index >= 14 && index <= 27 && stId == 4 ) { // 後兩周
+                    SecondWeekDayOffCount++;
+                }
+            });
+            if (FirstWeekDayOffCount + SecondWeekDayOffCount >= 4) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        // 驗證條件2.每四周至少排八天假
+        let AtLeastEightDayOffInFourWeek_ShiftEmp = () => {
+            let WeekDayOffCount = 0;
+            var shiftFormData = $('#ShiftTbody input').toArray();
+            shiftFormData.forEach((item, index, array) => {
+                let stId = $(item).attr('data-stId'); // stId == 4 是 休假
+                if (stId == 4) {
+                    WeekDayOffCount++;
+                };
+            });
+            if (WeekDayOffCount >= 8) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        // 驗證條件3.當次班表最多可休2天假日
+        let NoMoreThenTwoDayOffInWeekendType_ShiftEmp = () => {
+            let WeekendDayOffCount = 0;
+            var shiftFormData = $('#ShiftTbody input').toArray();
+            shiftFormData.forEach((item, index, array) => {
+                let stId = $(item).attr('data-stId'); // stId == 4 是 休假
+                let isWeekend = $(item).attr('data-isWeekend'); // isWeekend == 'Y' 是周末
+                if (stId == 4 && isWeekend == 'Y') {
+                    WeekendDayOffCount++;
+                };
+            });
+            if (WeekendDayOffCount <= 2) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        // 驗證條件4.當次班表需上滿時數160小時
+        let Shift160HoursOneSchedule_ShiftEmp = () => {
+            let totalSetShiftHours = $('#totalSetShiftHours').text();
+            if (totalSetShiftHours >= 160) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+
+
+
+
+        //#endregion 排班人員
+
+
+
+
+
+
+
+
+        // TODO:
+        // 2.寫入班表可以透過清除修改，增加清除按鈕
+
+
+
+
+
+    </script>        
+}

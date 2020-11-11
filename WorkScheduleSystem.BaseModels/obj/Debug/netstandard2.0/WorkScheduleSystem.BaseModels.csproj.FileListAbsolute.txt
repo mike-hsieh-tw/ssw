@@ -1,0 +1,9 @@
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\bin\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.deps.json
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\bin\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.dll
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\bin\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.pdb
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\obj\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.AssemblyInfoInputs.cache
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\obj\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.AssemblyInfo.cs
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\obj\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.csproj.CoreCompileInputs.cache
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\obj\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.dll
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\obj\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.pdb
+D:\TempFiles\_CompanyProject\排休輪班系統\Code\Master\WorkScheduleSystem\WorkScheduleSystem.BaseModels\obj\Debug\netstandard2.0\WorkScheduleSystem.BaseModels.csprojAssemblyReference.cache

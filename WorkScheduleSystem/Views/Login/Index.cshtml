@@ -1,0 +1,203 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_login.cshtml";
+}
+
+
+
+<form class="form-signin" id="loginForm">
+    <div class="text-center mb-4">
+        @*<img class="mb-4" src="/docs/4.5/assets/brand/bootstrap-solid.svg" alt="" width="72" height="72">*@
+        <h1 class="h3 mb-3 font-weight-normal">輪值班系統</h1>
+    </div>
+
+    <div class="form-label-group">
+        <input type="text" id="inputPhone" class="form-control" placeholder="請輸入手機號碼" required="" autofocus="">
+        <label for="inputPhone">請輸入手機號碼</label>
+    </div>
+
+    <div class="form-label-group mb-0">
+        <input type="password" id="inputPassword" class="form-control" placeholder="請輸入密碼" required="">
+        <label for="inputPassword">請輸入密碼</label>
+    </div>
+    <div class="m-1 text-right">
+        <label>
+            <a href="#" id="btn_forgetPwd" >忘記密碼</a>
+        </label>
+    </div>
+    <input class="btn btn-lg btn-primary btn-block" type="button" id="btn_submit" value="登入">
+    <div class="p-1 text-danger text-center">
+        <span id="ErrorMsg"></span>
+    </div>
+    <p class="mt-5 mb-3 text-muted text-center">© 2020</p>
+</form>
+
+
+
+
+@section scripts
+{
+    <script type="text/javascript">
+
+        $(() => {
+            ValidateToken(); // 判斷有無 token + cookie['WssAuth']
+
+            login(); // 註冊登入事件
+
+            forgetPassword(); // 註冊忘記密碼事件
+        });
+
+        var ResetLocalStorage = () => {
+            localStorage.removeItem('token');
+            removeCookies('WssAuth');
+        };
+
+        var ValidateToken = () => {
+            // 判斷有無 token，沒有直接跳轉回登入頁面
+            console.log('getCookie()', getCookie('WssAuth').trim() != '');
+            if (localStorage.getItem('token') == null || getCookie('WssAuth').trim() == '') {
+                ResetLocalStorage(); // 重置localStorage
+            } else {
+                $.ajax({
+                    url: '@Url.RouteUrl("DefaultApi", new { httproute = "", controller = "JwtToken" })',
+                    type: 'GET',
+                    headers: { "Authorization": 'Bearer ' + localStorage.getItem('token') },
+                    success: (data) => {
+                        window.location.href = '@Url.Action("Index","Shift")';
+                        if (data) {
+                            // success todo...
+                        }
+                    },
+                    error: (data) => {
+                        alert('登入逾時，請重新登入!');
+                        ResetLocalStorage();
+                    }
+                });
+            }
+        };             
+
+
+        // 登入
+        var login = () => {
+            $('#btn_submit').click(() => {
+                var account = $('#inputPhone').val();
+                var password = $('#inputPassword').val();
+                var loginData = `${account}:${password}`
+
+                if (account === null || account === '' || password === null || password === '') {
+                    $('#ErrorMsg').text("請確認欄位是否空值!").show();
+                } else {
+                    $('#ErrorMsg').text("").hide();
+
+                    $.ajax({
+                    url: '@Url.RouteUrl("DefaultApi", new { httproute = "", controller = "AccountCheck" })',
+                    type: 'GET',
+                    // Fetch the stored token from localStorage and set in the header
+                    headers: { "Authorization": 'Basic ' + btoa(loginData) },
+                    success: (rtnVal) => {
+                        if (rtnVal.Status == 200) {
+                            localStorage.setItem('token', rtnVal.Payload);
+                            ResetCookies(account);
+                            window.location.href = '@Url.Action("Index","Shift")';
+                        }
+                    },
+                    error: (rtnVal) => {
+                        // handle error
+                        if (rtnVal.responseJSON.Status == 401) {
+                            var val = getCookie(account);
+                            if (val === null || val.trim() === '') {
+                                setCookie(account, 1, 60);
+                                $('#ErrorMsg').text(`${rtnVal.responseJSON.Data} (第１次，第３次將鎖定帳戶！)`).show();
+                            }
+                            else if (val < 2) {
+                                setCookie(account, 2, 60);
+                                $('#ErrorMsg').text(`${rtnVal.responseJSON.Data} (第２次，第３次將鎖定帳戶！)`).show();
+                            } else {
+                                setCookie(account, 3, 60);
+                                disableUser(account); // 鎖定帳戶
+                            }
+                        } else {
+                            $('#ErrorMsg').text(rtnVal.responseJSON.Data).show();
+                        }
+                    }
+                });
+                }
+
+            });
+        };
+
+        // 鎖定帳戶
+        var disableUser = (_account) => {
+            var user = new Object();
+            user.account = _account
+
+            $.ajax({
+                url: `@Url.Action("DisableUser", "LoginService")`,
+                type: 'POST',
+                data: JSON.stringify(user),
+                dataType: "json",
+                contentType: "application/json;charset=utf-8",
+                success: (rtnVal) => {
+                    if (rtnVal.Status == 200) {
+                        ResetCookies(_account);
+                    } 
+                    Swal.fire({
+                        title: rtnVal.Data,
+                        confirmButtonText: '確認'
+                    })
+                },
+                error: (rtnVal) => {
+                    console.log('error:', rtnVal.responseJSON.Data);
+                }
+            });
+        };
+
+        // 忘記密碼
+        var forgetPassword = () => {
+            $('#btn_forgetPwd').click(() => {
+                Swal.mixin({
+                    input: 'text',
+                    confirmButtonText: '下一步',
+                    showCancelButton: true,
+                    cancelButtonText: '取消',
+                    progressSteps: ['1', '2']
+                }).queue([
+                    {
+                        title: '請輸入您的帳號',
+                    },
+                    '再次確認您的帳號',
+                ]).then((result) => {
+                    if (result.value) {
+                        if (result.value[0] === result.value[1] &&
+                            IsStringNullorEmpty(result.value[0]) &&
+                            IsStringNullorEmpty(result.value[1])
+                        )
+                        {
+                            disableUser(result.value[0]); // 鎖定帳戶
+                        }
+                        else {
+                            Swal.fire({
+                                title: '帳號雙重驗證失敗!',
+                                //html: `Your answers:<pre><code>${answers}</code></pre>`,
+                                confirmButtonText: '確認'
+                            })
+                        }                                                    
+                    }
+                })
+            });            
+        };
+
+        // 重置 1.登入成功帳戶  2.鎖定成功帳戶 的cookies
+        var ResetCookies = (cname) => {
+            if (checkCookie(cname)) {
+                removeCookies(cname);
+            }
+        };
+
+
+
+
+
+    </script>
+}
