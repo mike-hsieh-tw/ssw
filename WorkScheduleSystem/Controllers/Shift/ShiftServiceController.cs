@@ -147,6 +147,13 @@ namespace WorkScheduleSystem.Controllers.Shift
             return Json(apiResult, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public JsonResult GetShiftScheduleHours(int sid, int uid)
+        {
+            var result = shiftService.GetShiftScheduleHoursModelByStId(sid, uid);
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
 
 
     }
