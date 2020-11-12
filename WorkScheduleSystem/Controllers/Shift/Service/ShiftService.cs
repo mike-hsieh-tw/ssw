@@ -119,37 +119,134 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
             return result;
         }
 
+        //public APIResult InsertDataToShiftScheduleModel(List<ShiftUnitDataViewModel> shiftFormData)
+        //{
+        //    APIResult apiResult = new APIResult();
+        //    List<string> errDate = new List<string>();
+        //    foreach (var item in shiftFormData)
+        //    {
+
+        //        ShiftScheduleModel shiftScheduleModelData = new ShiftScheduleModel()
+        //        {
+        //            sId = item.sId,
+        //            uId = item.uId,
+        //            stId = item.stId,
+        //            shiftDate = DateTime.ParseExact(item.sDate, "yyyyMMdd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces), // string "yyyyMMdd" => Datetime 
+        //            hours = item.sHours,
+        //            memo = item.sMemo,
+        //            createDatetime = DateTime.Now,
+        //            updateEmp = item.updateEmp
+        //        };
+        //        int NewId = SimpleFactory.CreateInstance().Add<ShiftScheduleModel>(shiftScheduleModelData);
+
+        //        if (NewId == 0)
+        //        {
+        //            errDate.Add(item.sDate);
+        //        }                    
+        //    }
+
+        //    if (errDate.Count != 0)
+        //    {
+        //        apiResult.Status = 401;
+        //        apiResult.Message = "fail";
+        //        apiResult.DataList = errDate;                
+        //    }
+        //    else
+        //    {
+        //        apiResult.Status = 200;
+        //        apiResult.Message = "success";
+        //    }
+        //    return apiResult;
+        //}
+
+        //// 新增入排班時數統計表
+        //public APIResult InsertDataToShiftScheduleHoursModel(List<ShiftHoursUnitDataViewModel> shiftFormData)
+        //{
+        //    APIResult apiResult = new APIResult();
+        //    List<string> errUid = new List<string>();
+        //    foreach (var item in shiftFormData)
+        //    {
+        //        ShiftScheduleHoursModel shiftScheduleHoursModelData = new ShiftScheduleHoursModel()
+        //        {
+        //            sId = item.sId,
+        //            uId = item.uId,
+        //            totalShiftHours = item.totalShiftHours,
+        //            totalSetShiftHours = item.totalSetShiftHours,
+        //            totalSetSpcHours = item.totalSetSpcHours,
+        //            totalNormalFixHours = item.totalNormalFixHours,
+        //            totalNationalFixHours = item.totalNationalFixHours,
+        //            updateDatetime = DateTime.Now,
+        //            createDatetime = DateTime.Now,
+        //            updateEmp = item.updateEmp
+        //        };
+        //        int NewId = SimpleFactory.CreateInstance().Add<ShiftScheduleHoursModel>(shiftScheduleHoursModelData);
+
+        //        if (NewId == 0)
+        //        {
+        //            errUid.Add(item.uId.ToString());
+
+        //            apiResult.Status = 401;
+        //            apiResult.Message = "fail";
+        //        }
+        //    }
+        //    if (errUid.Count != 0)
+        //    {
+        //        apiResult.Status = 401;
+        //        apiResult.Message = "fail";
+        //        apiResult.DataList = errUid;
+        //    }
+        //    else
+        //    {
+        //        apiResult.Status = 200;
+        //        apiResult.Message = "success";
+        //    }
+
+        //    return apiResult;            
+        //}
+
         public APIResult InsertDataToShiftScheduleModel(List<ShiftUnitDataViewModel> shiftFormData)
         {
             APIResult apiResult = new APIResult();
             List<string> errDate = new List<string>();
             foreach (var item in shiftFormData)
             {
+                // 找出是否有這筆資料
+                var currItem = SimpleFactory.CreateInstance().FindAll<ShiftScheduleModel>().AsQueryable().Where(x =>
+                x.shiftDate == DateTime.ParseExact(item.sDate, "yyyyMMdd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces) &&
+                x.stId == item.stId &&
+                x.memo == item.sMemo
+                ).FirstOrDefault();
 
-                ShiftScheduleModel shiftScheduleModelData = new ShiftScheduleModel()
+                // 若是沒有才新增進去
+                if (currItem == null)
                 {
-                    sId = item.sId,
-                    uId = item.uId,
-                    stId = item.stId,
-                    shiftDate = DateTime.ParseExact(item.sDate, "yyyyMMdd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces), // string "yyyyMMdd" => Datetime 
-                    hours = item.sHours,
-                    memo = item.sMemo,
-                    createDatetime = DateTime.Now,
-                    updateEmp = item.updateEmp
-                };
-                int NewId = SimpleFactory.CreateInstance().Add<ShiftScheduleModel>(shiftScheduleModelData);
+                    ShiftScheduleModel shiftScheduleModelData = new ShiftScheduleModel()
+                    {
+                        sId = item.sId,
+                        uId = item.uId,
+                        stId = item.stId,
+                        shiftDate = DateTime.ParseExact(item.sDate, "yyyyMMdd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces), // string "yyyyMMdd" => Datetime 
+                        hours = item.sHours,
+                        memo = item.sMemo,
+                        createDatetime = DateTime.Now,
+                        updateEmp = item.updateEmp
+                    };
+                    int NewId = SimpleFactory.CreateInstance().Add<ShiftScheduleModel>(shiftScheduleModelData);
 
-                if (NewId == 0)
-                {
-                    errDate.Add(item.sDate);
-                }                    
+                    if (NewId == 0)
+                    {
+                        errDate.Add(item.sDate);
+                    }
+                }
+
+
             }
 
             if (errDate.Count != 0)
             {
                 apiResult.Status = 401;
                 apiResult.Message = "fail";
-                apiResult.DataList = errDate;                
+                apiResult.DataList = errDate;
             }
             else
             {
@@ -159,35 +256,72 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
             return apiResult;
         }
 
-        // 新增入排班時數統計表
+        // 新增/修改入排班時數統計表
         public APIResult InsertDataToShiftScheduleHoursModel(List<ShiftHoursUnitDataViewModel> shiftFormData)
         {
             APIResult apiResult = new APIResult();
             List<string> errUid = new List<string>();
             foreach (var item in shiftFormData)
             {
-                ShiftScheduleHoursModel shiftScheduleHoursModelData = new ShiftScheduleHoursModel()
-                {
-                    sId = item.sId,
-                    uId = item.uId,
-                    totalShiftHours = item.totalShiftHours,
-                    totalSetShiftHours = item.totalSetShiftHours,
-                    totalSetSpcHours = item.totalSetSpcHours,
-                    totalNormalFixHours = item.totalNormalFixHours,
-                    totalNationalFixHours = item.totalNationalFixHours,
-                    updateDatetime = DateTime.Now,
-                    createDatetime = DateTime.Now,
-                    updateEmp = item.updateEmp
-                };
-                int NewId = SimpleFactory.CreateInstance().Add<ShiftScheduleHoursModel>(shiftScheduleHoursModelData);
+                // 找出是否有這筆資料
+                var currItem = SimpleFactory.CreateInstance().FindAll<ShiftScheduleHoursModel>().AsQueryable().Where(x =>
+                    x.uId == item.uId &&
+                    x.sId == item.sId
+                ).FirstOrDefault();
 
-                if (NewId == 0)
+                // 若是沒有才新增進去
+                if (currItem == null)
                 {
-                    errUid.Add(item.uId.ToString());
+                    ShiftScheduleHoursModel shiftScheduleHoursModelData = new ShiftScheduleHoursModel()
+                    {
+                        sId = item.sId,
+                        uId = item.uId,
+                        totalShiftHours = item.totalShiftHours,
+                        totalSetShiftHours = item.totalSetShiftHours,
+                        totalSetSpcHours = item.totalSetSpcHours,
+                        totalNormalFixHours = item.totalNormalFixHours,
+                        totalNationalFixHours = item.totalNationalFixHours,
+                        updateDatetime = DateTime.Now,
+                        createDatetime = DateTime.Now,
+                        updateEmp = item.updateEmp
+                    };
+                    int NewId = SimpleFactory.CreateInstance().Add<ShiftScheduleHoursModel>(shiftScheduleHoursModelData);
 
-                    apiResult.Status = 401;
-                    apiResult.Message = "fail";
+                    if (NewId == 0)
+                    {
+                        errUid.Add(item.uId.ToString());
+
+                        apiResult.Status = 401;
+                        apiResult.Message = "fail";
+                    }
                 }
+                else // 若是有資料，使用更新
+                {
+                    ShiftScheduleHoursModel shiftScheduleHoursModelData = new ShiftScheduleHoursModel()
+                    {
+                        Id = currItem.Id,
+                        sId = item.sId,
+                        uId = item.uId,
+                        totalShiftHours = item.totalShiftHours,
+                        totalSetShiftHours = item.totalSetShiftHours,
+                        totalSetSpcHours = item.totalSetSpcHours,
+                        totalNormalFixHours = item.totalNormalFixHours,
+                        totalNationalFixHours = item.totalNationalFixHours,
+                        updateDatetime = DateTime.Now,
+                        createDatetime = currItem.createDatetime,
+                        updateEmp = item.updateEmp
+                    };
+                    bool result = SimpleFactory.CreateInstance().Update<ShiftScheduleHoursModel>(shiftScheduleHoursModelData);
+
+                    if (result == false)
+                    {
+                        errUid.Add(item.updateEmp.ToString());
+
+                        apiResult.Status = 401;
+                        apiResult.Message = "fail";
+                    }
+                }
+
             }
             if (errUid.Count != 0)
             {
@@ -201,7 +335,7 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
                 apiResult.Message = "success";
             }
 
-            return apiResult;            
+            return apiResult;
         }
 
 
