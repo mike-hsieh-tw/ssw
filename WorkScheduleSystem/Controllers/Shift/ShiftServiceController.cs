@@ -147,11 +147,39 @@ namespace WorkScheduleSystem.Controllers.Shift
             return Json(apiResult, JsonRequestBehavior.AllowGet);
         }
 
-        [HttpGet]
-        public JsonResult GetShiftScheduleHours(int sid, int uid)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sid">班表sid</param>
+        /// <param name="uid">用戶uid</param>
+        /// <param name="strDate">當前班表起始日期</param>
+        /// <param name="depId">當前部門</param>
+        /// <returns></returns>
+        [HttpGet]        
+        public JsonResult GetShiftScheduleHours(int sid, int uid, string strDate, int depId)
         {
-            var result = shiftService.GetShiftScheduleHoursModelByStId(sid, uid);
-            return Json(result, JsonRequestBehavior.AllowGet);
+            APIResult apiResult = new APIResult();
+
+            try
+            {
+                var ShiftScheduleHours = shiftService.GetShiftScheduleHoursModelByStId(sid, uid);
+                var previousShiftScheduleHours = shiftService.GetPreviousShiftScheduleHours(depId, strDate);
+
+                apiResult.Status = 200;
+                apiResult.Message = "success";
+                apiResult.DataList = new {
+                    ShiftScheduleHours, // 當前總時數表
+                    previousShiftScheduleHours  // 前一個總時數表
+                };
+            }
+            catch (Exception ex)
+            {
+                apiResult.Status = 401;
+                apiResult.Message = "fail";
+                apiResult.Data = ex.ToString();
+            }                        
+
+            return Json(apiResult, JsonRequestBehavior.AllowGet);
         }
 
 

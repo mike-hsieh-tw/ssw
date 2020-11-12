@@ -118,6 +118,78 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
             }
         }
 
+        // 取得上一個班表的總時數資料
+        public ShiftHoursUnitDataViewModel GetPreviousShiftScheduleHours(int departmentID, string startDate)
+        {
+            using (SqlConnection conn = new SqlConnection(Singleton.GetConnectionString()))
+            {
+                ShiftHoursUnitDataViewModel result = new ShiftHoursUnitDataViewModel();
+                string sql = $@"
+                    SELECT 
+                        [sId],
+	                    [uId],
+	                    [totalShiftHours],
+	                    [totalSetShiftHours],
+	                    [totalSetSpcHours],
+	                    [totalNormalFixHours],
+	                    [totalNationalFixHours]
+                    FROM [ShiftScheduleHours]
+                    WHERE sid = (
+	                    SELECT  TOP 1 id 
+	                    FROM ShiftSystem
+	                    WHERE departmentID = @departmentID AND startDate < @startDate
+	                    ORDER BY startDate DESC
+                    )
+                ";
+                string ErrorMsg = "";
+                SqlTransaction tran = null;
+                try
+                {
+                    conn.Open();
+                    using (tran = conn.BeginTransaction())
+                    {
+                        using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
+                        {
+                            //LogMethod.WriteLog($"[T-SQL] {sql}");
+                            cmd.Parameters.AddWithValue("@departmentID", departmentID);
+                            cmd.Parameters.AddWithValue("@startDate", startDate.Substring(0, 10));
+                            SqlDataReader dr = cmd.ExecuteReader();
+                            while (dr.Read())
+                            {
+                                result.sId = (int)dr["sId"];
+                                result.uId = (int)dr["uId"];
+                                result.totalShiftHours = (double)dr["totalShiftHours"];
+                                result.totalSetSpcHours = (double)dr["totalSetSpcHours"];
+                                result.totalSetShiftHours = (double)dr["totalSetShiftHours"];
+                                result.totalNormalFixHours = (double)dr["totalNormalFixHours"];
+                                result.totalNationalFixHours = (double)dr["totalNationalFixHours"];
+                            }
+                            tran.Commit();
+                        }
+                    }
+                }
+                catch (Exception ex1)
+                {
+                    try
+                    {
+                        ErrorMsg = $"{ex1}";
+                        tran.Rollback();
+                    }
+                    catch (Exception ex2)
+                    {
+
+                        ErrorMsg += $"\r\n{ex2}";
+                    }
+                }
+                finally
+                {
+                    // 若是有錯誤資料就寫log
+                    //if (!string.IsNullOrEmpty(ErrorMsg)) LogMethod.WriteLog(ErrorMsg, true);
+                }
+                return result;
+            }
+        }
+
         // 取得班表的起始日和結束日
         public ShiftSystemModel GetShiftSystemDates(int sId)
         {

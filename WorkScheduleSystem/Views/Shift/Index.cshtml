@@ -236,7 +236,7 @@
                         //  產生班表排班內容。參數=> 1.起始日期  2.終止日期  3.排班資料  4.使用者ID(選填，不填則是該班表所有人員)
                         CreateTbodyMultiUser_ShiftEmp(strDate, endDate, data, AuthUserData.Id);
 
-                        LoadShiftTotalInfo_ShiftEmp(result); // 載入排班統計時數資料
+                        LoadShiftTotalInfo_ShiftEmp(strDate); // 載入排班統計時數資料
                     },
                     error: (errMsg) => {
                         // ToDo...
@@ -449,32 +449,34 @@
         //    <p class="mb-0" id="totalNationalFixHours_p">之前缺少/超額國定假日時數：<span id="totalNationalFixHours"></span></p>
 
         // 載入排班統計時數資料
-        let LoadShiftTotalInfo_ShiftEmp = (result) => {
+        let LoadShiftTotalInfo_ShiftEmp = (strDate) => {
             let sid = $('#select_shiftSystem').val();
             let uid = AuthUserData.Id;
+            let depId = $('#select_department').val();
              $.ajax({
-                 url: `@Url.Action("GetShiftScheduleHours", "ShiftService")?sid=${sid}&uid=${uid}`,
+                 url: `@Url.Action("GetShiftScheduleHours", "ShiftService")?sid=${sid}&uid=${uid}&strDate=${strDate}&depId=${depId}`,
                  type: 'GET',
                  async: false,
                  success: (result) => {
-                     if (result.length != 0) {
-                         $('#totalShiftHours').text(result[0].totalShiftHours); // 當月總時數
-                         $('#totalSetShiftHours').text(result[0].totalSetShiftHours);  // 當月已排時數
-                         $('#totalSetSpcHours').text(result[0].totalSetSpcHours); // 當月已排特休
-                         $('#leftShiftHours').text(result[0].totalShiftHours - result[0].totalSetShiftHours); // 尚需排時數
-                         $('#totalNormalFixHours').text(result[0].totalNormalFixHours); // 之前缺少/超額普通時數
-                         $('#totalNationalFixHours').text(result[0].totalNationalFixHours); // 之前缺少/超額國定假日時數
-                     } else {
-                        //確認當次須排總時數是否有國定假日並設定日期=> [無:160Hr]，[有:160+8，且這多個8小時要再之後兩個班表內放掉調]
-                        if (result.hasNationalHoliday == true) $('#totalShiftHours').text('168');
-                        else $('#totalShiftHours').text('160');
+                     console.log('GetShiftScheduleHours', result);
+                     //if (result.length != 0) {
+                     //    $('#totalShiftHours').text(result[0].totalShiftHours); // 當月總時數
+                     //    $('#totalSetShiftHours').text(result[0].totalSetShiftHours);  // 當月已排時數
+                     //    $('#totalSetSpcHours').text(result[0].totalSetSpcHours); // 當月已排特休
+                     //    $('#leftShiftHours').text(result[0].totalShiftHours - result[0].totalSetShiftHours); // 尚需排時數
+                     //    $('#totalNormalFixHours').text(result[0].totalNormalFixHours); // 之前缺少/超額普通時數
+                     //    $('#totalNationalFixHours').text(result[0].totalNationalFixHours); // 之前缺少/超額國定假日時數
+                     //} else {
+                     //   //確認當次須排總時數是否有國定假日並設定日期=> [無:160Hr]，[有:160+8，且這多個8小時要再之後兩個班表內放掉調]
+                     //   if (result.hasNationalHoliday == true) $('#totalShiftHours').text('168');
+                     //   else $('#totalShiftHours').text('160');
 
-                         $('#totalSetShiftHours').text(0);  // 當月已排時數
-                         $('#totalSetSpcHours').text(0); // 當月已排特休
-                         $('#leftShiftHours').text($('#totalShiftHours').text()); // 尚需排時數
-                         $('#totalNormalFixHours').text(11); // 之前缺少/超額普通時數
-                         $('#totalNationalFixHours').text(11); // 之前缺少/超額國定假日時數
-                     }                                                                
+                     //    $('#totalSetShiftHours').text(0);  // 當月已排時數
+                     //    $('#totalSetSpcHours').text(0); // 當月已排特休
+                     //    $('#leftShiftHours').text($('#totalShiftHours').text()); // 尚需排時數
+                     //    $('#totalNormalFixHours').text(11); // 之前缺少/超額普通時數
+                     //    $('#totalNationalFixHours').text(11); // 之前缺少/超額國定假日時數
+                     //}                                                                
                 },
                 error: (errMsg) => {
                     // ToDo...
