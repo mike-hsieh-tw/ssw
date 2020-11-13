@@ -119,6 +119,76 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
         }
 
         // 取得上一個班表的總時數資料
+        public ShiftUnitSystemViewModel GetPreviousShiftSystem(int departmentID, string startDate)
+        {
+            using (SqlConnection conn = new SqlConnection(Singleton.GetConnectionString()))
+            {
+                ShiftUnitSystemViewModel result = new ShiftUnitSystemViewModel();
+                string sql = $@"
+                     SELECT 
+                        [departmentID],
+	                    [name],
+	                    [startDate],
+	                    [endDate],
+	                    [status],
+	                    [hasNationalHoliday]
+                    FROM [ShiftSystem]
+                    WHERE id = (
+	                    SELECT  TOP 1 id 
+	                    FROM ShiftSystem
+	                    WHERE departmentID = @departmentID AND startDate < @startDate
+	                    ORDER BY startDate DESC
+                    )
+                ";
+                string ErrorMsg = "";
+                SqlTransaction tran = null;
+                try
+                {
+                    conn.Open();
+                    using (tran = conn.BeginTransaction())
+                    {
+                        using (SqlCommand cmd = new SqlCommand(sql, conn, tran))
+                        {
+                            //LogMethod.WriteLog($"[T-SQL] {sql}");
+                            cmd.Parameters.AddWithValue("@departmentID", departmentID);
+                            cmd.Parameters.AddWithValue("@startDate", startDate.Substring(0, 10));
+                            SqlDataReader dr = cmd.ExecuteReader();
+                            while (dr.Read())
+                            {
+                                result.departmentID = (int)dr["departmentID"];
+                                result.name = dr["name"].ToString();
+                                result.startDate = Convert.ToDateTime(dr["startDate"]);
+                                result.endDate = Convert.ToDateTime(dr["endDate"]);
+                                result.status = (int)dr["status"];
+                                result.hasNationalHoliday = (bool)dr["hasNationalHoliday"];
+                            }
+                            tran.Commit();
+                        }
+                    }
+                }
+                catch (Exception ex1)
+                {
+                    try
+                    {
+                        ErrorMsg = $"{ex1}";
+                        tran.Rollback();
+                    }
+                    catch (Exception ex2)
+                    {
+
+                        ErrorMsg += $"\r\n{ex2}";
+                    }
+                }
+                finally
+                {
+                    // 若是有錯誤資料就寫log
+                    //if (!string.IsNullOrEmpty(ErrorMsg)) LogMethod.WriteLog(ErrorMsg, true);
+                }
+                return result;
+            }
+        }
+
+        // 取得上一個班表的總時數資料
         public ShiftHoursUnitDataViewModel GetPreviousShiftScheduleHours(int departmentID, string startDate)
         {
             using (SqlConnection conn = new SqlConnection(Singleton.GetConnectionString()))
@@ -189,6 +259,7 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
                 return result;
             }
         }
+
 
         // 取得班表的起始日和結束日
         public ShiftSystemModel GetShiftSystemDates(int sId)

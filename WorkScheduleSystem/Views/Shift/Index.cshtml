@@ -104,8 +104,11 @@
         })
 
         // 全域
-        var formData;
-        var AuthUserData;
+        let formData; // 預設資料
+        let AuthUserData; // 使用者資訊
+        let currHoursData; // 當前總時數統計
+        let previousHoursData;  // 前個班表總時數統計
+        let currHasNationalHoliday; // 當前班表是否有國定假日
 
         $(() => {
 
@@ -226,8 +229,9 @@
 
                         let strDate = result.strDate;
                         let endDate = result.endDate;
-                        let hasNationalHoliday = result.hasNationalHoliday;
                         let data = result.ShiftUnitDataViewModelList;
+                        currHasNationalHoliday = result.hasNationalHoliday; // 全域賦值
+
 
                         CreateTheadDate_ShiftEmp(strDate, endDate); // 產生日期表頭
 
@@ -237,6 +241,8 @@
                         CreateTbodyMultiUser_ShiftEmp(strDate, endDate, data, AuthUserData.Id);
 
                         LoadShiftTotalInfo_ShiftEmp(strDate); // 載入排班統計時數資料
+
+                        GetTotalShiftInfo_ShiftEmp(); // 即時計算統計時數，目的是補休、補班的時數加減
                     },
                     error: (errMsg) => {
                         // ToDo...
@@ -458,25 +464,38 @@
                  type: 'GET',
                  async: false,
                  success: (result) => {
-                     console.log('GetShiftScheduleHours', result);
-                     //if (result.length != 0) {
-                     //    $('#totalShiftHours').text(result[0].totalShiftHours); // 當月總時數
-                     //    $('#totalSetShiftHours').text(result[0].totalSetShiftHours);  // 當月已排時數
-                     //    $('#totalSetSpcHours').text(result[0].totalSetSpcHours); // 當月已排特休
-                     //    $('#leftShiftHours').text(result[0].totalShiftHours - result[0].totalSetShiftHours); // 尚需排時數
-                     //    $('#totalNormalFixHours').text(result[0].totalNormalFixHours); // 之前缺少/超額普通時數
-                     //    $('#totalNationalFixHours').text(result[0].totalNationalFixHours); // 之前缺少/超額國定假日時數
-                     //} else {
-                     //   //確認當次須排總時數是否有國定假日並設定日期=> [無:160Hr]，[有:160+8，且這多個8小時要再之後兩個班表內放掉調]
-                     //   if (result.hasNationalHoliday == true) $('#totalShiftHours').text('168');
-                     //   else $('#totalShiftHours').text('160');
+                     //console.log('GetShiftScheduleHours', result);
+                     let data = currHoursData = result.DataList.ShiftScheduleHours;
+                     let previousData = previousHoursData = result.DataList.previousShiftScheduleHours;
+                     let previousSystem = result.DataList.previousShiftSystem;
 
-                     //    $('#totalSetShiftHours').text(0);  // 當月已排時數
-                     //    $('#totalSetSpcHours').text(0); // 當月已排特休
-                     //    $('#leftShiftHours').text($('#totalShiftHours').text()); // 尚需排時數
-                     //    $('#totalNormalFixHours').text(11); // 之前缺少/超額普通時數
-                     //    $('#totalNationalFixHours').text(11); // 之前缺少/超額國定假日時數
-                     //}                                                                
+                     //確認當次須排總時數是否有國定假日並設定日期=> [無:160Hr]，[有:160+8，且這多個8小時要再之後兩個班表內放掉調]
+                     let currTotalShiftHours = currHasNationalHoliday == true ? 168 : 160;                  
+
+                     // 尚需排時數若是排超過就顯示0
+                     let leftShiftHours = parseFloat(data[0]?.totalShiftHours - data[0]?.totalSetShiftHours < 0 ? 0 : data[0]?.totalShiftHours - data[0]?.totalSetShiftHours);
+
+                     // 之前缺少/超額普通時數
+                     let totalNormalFixHours = parseFloat(previousData?.totalSetShiftHours - previousData?.totalShiftHours);
+
+                     // 之前缺少/超額國定假日時數
+                     let totalNationalFixHours = previousSystem?.hasNationalHoliday == true ? 8 : 0;   
+
+                     if (data.length != 0) {
+                         $('#totalShiftHours').text(data[0].totalShiftHours); // 當月總時數
+                         $('#totalSetShiftHours').text(data[0].totalSetShiftHours);  // 當月已排時數
+                         $('#totalSetSpcHours').text(data[0].totalSetSpcHours); // 當月已排特休
+                         $('#leftShiftHours').text(leftShiftHours); // 尚需排時數
+                         $('#totalNormalFixHours').text(totalNormalFixHours); // 之前缺少/超額普通時數
+                         $('#totalNationalFixHours').text(data[0].totalNationalFixHours); // 之前缺少/超額國定假日時數
+                     } else {                        
+                         $('#totalShiftHours').text(currTotalShiftHours); // 當月總時數
+                         $('#totalSetShiftHours').text(0);  // 當月已排時數
+                         $('#totalSetSpcHours').text(0); // 當月已排特休
+                         $('#leftShiftHours').text($('#totalShiftHours').text()); // 尚需排時數
+                         $('#totalNormalFixHours').text(totalNormalFixHours); // 之前缺少/超額普通時數
+                         $('#totalNationalFixHours').text(totalNationalFixHours); // 之前缺少/超額國定假日時數
+                     }                                                                
                 },
                 error: (errMsg) => {
                     // ToDo...
@@ -529,7 +548,8 @@
                                 'data-sHours': shiftHours.val()
                             })
                             .val(
-                                `${formData.ShiftTypeModelList.filter(x => x.Id == shiftTypeVal.val())[0].displayName}(${shiftHours.val()})`);
+                                `${formData.ShiftTypeModelList.filter(x => x.Id == shiftTypeVal.val())[0].displayName}(${shiftHours.val()})`
+                            );
                     }
                     GetTotalShiftInfo_ShiftEmp(); // 計算排班資訊
                 }
@@ -543,13 +563,14 @@
         //    <p class="mb-0" id="totalSetShiftHours_p">已排時數：<span id="totalSetShiftHours"></span></p>
         //    <p class="mb-0" id="totalSetSpcHours_p">已排特休：<span id="totalSetSpcHours"></span></p>
         //    <p class="mb-0" id="leftShiftHours_p">總尚需排時數：<span id="leftShiftHours"></span></p>
-        //    <p class="mb-0" id="totalNormalFixHours_p">之前缺少/超額普通時數：<span id="totalNormalFixHours"></span></p>
-        //    <p class="mb-0" id="totalNationalFixHours_p">之前缺少/超額國定假日時數：<span id="totalNationalFixHours"></span></p>
+        //    <p class="mb-0" id="totalNormalFixHours_p">截至目前總計缺少/超額普通時數：<span id="totalNormalFixHours"></span></p>
+        //    <p class="mb-0" id="totalNationalFixHours_p">之前超額國定假日時數：<span id="totalNationalFixHours"></span></p>
 
         // 即時計算排班資訊
         let GetTotalShiftInfo_ShiftEmp = () => {
             let totalSetShiftHours = 0;  // A:已排時數
             let totalSetSpcHours = 0; // B:已排特休
+            let totalNormalFixHours = 0; // C: 截至目前總計缺少/超額普通時數
             var shiftFormData = $('#ShiftTbody input').toArray();
 
             // stId(班表類別ID)=> 1:早班 2:晚班 3:全班 4:休假 5:特休 6:補休 7:補班 8:其他
@@ -573,23 +594,33 @@
                         break;
                     case 6:  // 補休
                         totalSetShiftHours += 8;  // A:已排時數
+                        totalNormalFixHours -= parseFloat($(item).attr('data-sHours')); //  C: 截至目前總計缺少/超額普通時數
                         break;
                     case 7:  // 補班
                         totalSetShiftHours += 8;  // A:已排時數
+                        totalNormalFixHours += parseFloat($(item).attr('data-sHours')); //  C: 截至目前總計缺少/超額普通時數
                         break;
-                    case 8:  // 其他
+                    case 8:  // 其他 可(+)(-)，(+)表示上班，(-)表示休息
+                        totalSetShiftHours += parseFloat($(item).attr('data-sHours'));  // A:已排時數
                         break;
                     default:  // 預設
                         break;
                 }
             });
 
-            $('#totalSetShiftHours').text(`${totalSetShiftHours}`); // 更新已排時數
-            $('#totalSetSpcHours').text(`${totalSetSpcHours}`); // 更新已排時數
-            $('#leftShiftHours').text(`${parseFloat($('#totalShiftHours').text()) - totalSetShiftHours}`); // 總時數 - 已排時數
+            // 若是排超過就顯示0
+            let leftShiftHours = parseFloat($('#totalShiftHours').text()) - totalSetShiftHours < 0 ? 0 : parseFloat($('#totalShiftHours').text()) - totalSetShiftHours;
 
+            // 
+            let previousLeftHours = parseFloat(previousHoursData?.totalSetShiftHours - previousHoursData?.totalShiftHours);
 
-
+            $('#totalSetShiftHours').text(totalSetShiftHours); // 更新已排時數
+            $('#totalSetSpcHours').text(totalSetSpcHours); // 更新已排時數
+            $('#leftShiftHours').text(leftShiftHours); // 尚須排班時數: 總時數 - 已排時數
+            //$('#totalNormalFixHours').append(`<span> + ( ${totalNormalFixHours} ) </span>`); // 總計缺少/超額普通時數: 上個班表的缺少時數 + 已排時數 - 總時數
+            $('#totalNormalFixHours').text(previousLeftHours).append(
+                ` + ( <span>${totalNormalFixHours}</span> ) = <span id="calculateTotalNormalFixHours">${previousLeftHours + totalNormalFixHours}</span>`
+            );
         };
 
 
@@ -599,29 +630,60 @@
             DocFrag.append($(`<option value="0">請選擇</option>`));
             formData.ShiftTypeModelList.forEach((item, index, array) => {
                 if (item.Id == stId) {
-                    let opt = $(`<option value=${item.Id} data-hours="${item.actualHours}" selected>${item.name}</option>`);
+                    let opt = $(`<option value=${item.Id} data-hours="${item.actualHours}" selected>${item.Id}:${item.name}</option>`);
                     DocFrag.append(opt);
                 }
                 else {
-                    let opt = $(`<option value=${item.Id} data-hours="${item.actualHours}">${item.name}</option>`);
+                    let opt = $(`<option value=${item.Id} data-hours="${item.actualHours}">${item.Id}:${item.name}</option>`);
                     DocFrag.append(opt);
                 }
             });
             $('#shiftType')
-                .append(DocFrag)
+                .append(DocFrag)                                
+                .on('keydown', (event) => {
+                    console.log(event);
+                    $(`#shiftType option[value="${parseInt(event.key)}"]`).attr('selected', true).siblings().removeAttr('selected');               
+                })
                 .on('change', function () { // change 事件時，將時數放入input中
                     let hours = $('#shiftType option:selected').attr('data-hours');
-                    // 日班:1  晚班:2  全班:3  休假:4  特休:5  其他:6  補回時數:7 ... From DB[ShiftType]
-                    if (this.value == 1 || this.value == 2 || this.value == 3 || this.value == 4) {
-                        $('#shiftHours').val(hours).attr('disabled', true);
-                    } else {
-                        $('#shiftHours').val(hours).attr('disabled', false);
-                    }
+                    SetSelectedVal(parseInt(this.value), hours);
                 });
         };
 
-        let LoadShiftHours_ShiftEmp = (stId, sHours) => {
+        let SetSelectedVal = (val, hours) => {
             // 日班:1  晚班:2  全班:3  休假:4  特休:5  其他:6  補回時數:7 ... From DB[ShiftType]
+            switch (val) {
+                case 1:
+                    $('#shiftHours').val(hours).attr('disabled', true);
+                    break;
+                case 2:
+                    $('#shiftHours').val(hours).attr('disabled', true);
+                    break;
+                case 3:
+                    $('#shiftHours').val(hours).attr('disabled', true);
+                    break;
+                case 4:
+                    $('#shiftHours').val(hours).attr('disabled', true);
+                    break;
+                case 5:
+                    $('#shiftHours').val(hours).attr('disabled', false);
+                    break;
+                case 6:
+                    $('#shiftHours').val(hours).attr('disabled', false);
+                    break;
+                case 7:
+                    $('#shiftHours').val(hours).attr('disabled', false);
+                    break;
+                case 8:
+                    $('#shiftHours').val(hours).attr('disabled', false);
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        let LoadShiftHours_ShiftEmp = (stId, sHours) => {
+            // 日班:1  晚班:2  全班:3  休假:4  ... From DB[ShiftType]
             if (stId == 1 || stId == 2 || stId == 3 || stId == 4) {
                 $('#shiftHours').val(sHours).attr('disabled', true);
             } else {
@@ -664,7 +726,7 @@
                 totalShiftHours: parseFloat($('#totalShiftHours').text()) ,
                 totalSetShiftHours: parseFloat( $('#totalSetShiftHours').text()),
                 totalSetSpcHours: parseFloat($('#totalSetSpcHours').text()),
-                totalNormalFixHours: parseFloat($('#totalNormalFixHours').text()),
+                totalNormalFixHours: parseFloat($('#calculateTotalNormalFixHours').text()) ,
                 totalNationalFixHours: parseFloat( $('#totalNationalFixHours').text()),
                 updateEmp: AuthUserData.name
             });

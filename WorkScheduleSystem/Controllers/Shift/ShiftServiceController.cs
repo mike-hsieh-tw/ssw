@@ -164,12 +164,14 @@ namespace WorkScheduleSystem.Controllers.Shift
             {
                 var ShiftScheduleHours = shiftService.GetShiftScheduleHoursModelByStId(sid, uid);
                 var previousShiftScheduleHours = shiftService.GetPreviousShiftScheduleHours(depId, strDate);
+                var previousShiftSystem = shiftService.GetPreviousShiftSystem(depId, strDate);
 
                 apiResult.Status = 200;
                 apiResult.Message = "success";
                 apiResult.DataList = new {
                     ShiftScheduleHours, // 當前總時數表
-                    previousShiftScheduleHours  // 前一個總時數表
+                    previousShiftScheduleHours,  // 前一個總時數表
+                    previousShiftSystem // 前一個班表
                 };
             }
             catch (Exception ex)
