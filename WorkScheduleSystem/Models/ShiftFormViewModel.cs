@@ -52,11 +52,11 @@ namespace WorkScheduleSystem.Models
     {
         public int uId { get; set; } // 員工ID
         public int sId { get; set; } // 班表ID
-        public double totalShiftHours { get; set; } // 排班日期
-        public double totalSetShiftHours { get; set; } // 備註
-        public double totalSetSpcHours { get; set; } // 班別ID
-        public double totalNormalFixHours { get; set; } // 班別名稱
-        public double totalNationalFixHours { get; set; } // 排班時數
+        public double totalShiftHours { get; set; } // 總需排班時數
+        public double totalSetShiftHours { get; set; } // 總已排班時數
+        public double totalSetSpcHours { get; set; } // 總特休已排時數
+        public double totalNormalFixHours { get; set; } // 總計已排超額/不足時數
+        public double totalNationalFixHours { get; set; } // 總計已排超額國定假日時數
         public string updateEmp { get; set; } // 更新者
     }
 

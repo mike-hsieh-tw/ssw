@@ -280,6 +280,7 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
                 var currItem = SimpleFactory.CreateInstance().FindAll<ShiftScheduleModel>().AsQueryable().Where(x =>
                 x.shiftDate == DateTime.ParseExact(item.sDate, "yyyyMMdd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces) &&
                 x.stId == item.stId &&
+                x.hours == item.sHours &&
                 x.memo == item.sMemo
                 ).FirstOrDefault();
 
