@@ -13,10 +13,24 @@ namespace WorkScheduleSystem.Models
         {
             DepartmentModelList = new List<DepartmentModel>();
             ShiftTypeModelList = new List<ShiftTypeModel>();
+            NationalHolidaysList = new List<NationalHolidaysViewModel>();
         }
 
         public List<DepartmentModel> DepartmentModelList { get; set; }
         public List<ShiftTypeModel> ShiftTypeModelList { get; set; }
+        public List<NationalHolidaysViewModel> NationalHolidaysList { get; set; }
+    }
+
+    // 國定假日
+    public class NationalHolidaysViewModel
+    {
+        public string name { get; set; }
+        public int? year { get; set; }
+        public string strDate { get; set; }
+        public string endDate { get; set; }
+        public DateTime? createDatetime { get; set; }
+        public string updateEmp { get; set; }
+
     }
 
     //  所有排班內容資料

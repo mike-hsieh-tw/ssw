@@ -66,6 +66,7 @@ namespace WorkScheduleSystem.Controllers.Shift
             ShiftFormViewModel viewModel;
             viewModel = new ShiftFormViewModel
             {
+                NationalHolidaysList = shiftService.GetThreeYearsNationalHolidaysList(),
                 DepartmentModelList = shiftService.GetDepartmentInfo(),
                 ShiftTypeModelList = shiftService.GetShiftTypeInfo()
             };

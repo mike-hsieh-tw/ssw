@@ -42,6 +42,24 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
             return SimpleFactory.CreateInstance().FindAll<ShiftScheduleHoursModel>().AsQueryable().Where(x => x.sId == sid && x.uId == uid).ToList();
         }
 
+        //ShiftSystemDates.startDate.ToString("u")
+        // 取得去年、今年、明年的國定假日
+        public List<NationalHolidaysViewModel> GetThreeYearsNationalHolidaysList()
+        {
+            return SimpleFactory.CreateInstance().FindAll<NationalHolidaysModel>().AsEnumerable().Where(x => 
+                x.year == DateTime.Now.Year || 
+                x.year == DateTime.Now.Year -1 ||
+                x.year == DateTime.Now.Year +1)
+                .Select(x => new NationalHolidaysViewModel { 
+                    name = x.name,
+                    year = x.year,
+                    strDate = x.strDate.Value.ToString("u"),
+                    endDate = x.endDate.Value.ToString("u"),
+                    createDatetime = x.createDatetime,
+                    updateEmp = x.updateEmp
+                }).ToList();
+        }
+
         // 取得人員排班資料 By 班表總表ID
         public List<ShiftUnitDataViewModel> GetShiftUnitDataViewModelList(int sId)
         {
@@ -276,16 +294,12 @@ namespace WorkScheduleSystem.Controllers.Shift.Service
             List<string> errDate = new List<string>();
             foreach (var item in shiftFormData)
             {
-                // 找出是否有這筆資料
+                // 找該日期最新的一筆資料
                 var currItem = SimpleFactory.CreateInstance().FindAll<ShiftScheduleModel>().AsQueryable().Where(x =>
-                x.shiftDate == DateTime.ParseExact(item.sDate, "yyyyMMdd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces) &&
-                x.stId == item.stId &&
-                x.hours == item.sHours &&
-                x.memo == item.sMemo
-                ).FirstOrDefault();
+                x.shiftDate == DateTime.ParseExact(item.sDate, "yyyyMMdd", null, System.Globalization.DateTimeStyles.AllowWhiteSpaces)).OrderByDescending(x => x.createDatetime).FirstOrDefault();                
 
-                // 若是沒有才新增進去
-                if (currItem == null)
+                // 若最新的一筆，值有任一不相同，就新增進去
+                if (currItem.stId != item.stId || currItem.hours != item.sHours || currItem.memo != item.sMemo)
                 {
                     ShiftScheduleModel shiftScheduleModelData = new ShiftScheduleModel()
                     {
